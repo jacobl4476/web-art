@@ -1,0 +1,19 @@
+<html>
+<head>
+<body>
+	<title>Home</title>
+	<link rel="stylesheet" type="text/css" href="musecss.css">
+    <h3>Jacob Leczycki's Random Web Apps</h3>
+    <button onclick = "goTo('fireworks')">Fireworks</button>
+    <button onclick = "goTo('lissajous')">Lisss Jous Demonstration</button>
+    <button onclick = "goTo('lissarotate')">Lissa Jous Optical Illusion</button>
+    <button onclick = "goTo('ripple')">Ripples</button>
+    <button onclick = "goTo('shoot')">Ball Physics Demonstration</button>
+    <button onclick = "goTo('tree')">Fractal Tree</button>
+</body>
+<script>   
+    function goTo(url){
+        window.location.href = window.location.href.replace("home", url)
+    }
+</script>
+</html>

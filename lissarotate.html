@@ -1,0 +1,158 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="musecss.css">
+<body onload="createCanvas()">
+	<title>Rotate</title>
+	<style>		
+	canvas.absolute {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+	div{
+		text-align: center;
+		font-size: 40px;
+	}
+	.slider{
+		padding: 2px;
+	}
+	.space{
+		height: 610px;
+	}
+	</style>
+	<div id="div">
+		
+	</div>
+	<div class="space">
+		
+	</div>
+	<div id="slider">
+		A<input type="range" min="1" max="15" value="1" class="slider" id="a">
+	</div>
+	<div id="slider">
+		B<input type="range" min="1" max="15" value="1" class="slider" id="b">
+	</div>
+<script>
+var height = 600;
+var width = 600;
+var speed = 10;
+var smallRad = 5;
+var largeRad = 100;
+var numberOfRows = 1
+var numberOfColumns = 1
+var intUpdate; 
+var mult = 10
+var circlesX = []
+var circlesY = []
+var off = 0
+var xInc = 1
+var yInc = 1
+var prevX
+var prevY
+var a
+var b
+
+var sliderA = document.getElementById("a");
+var sliderB = document.getElementById("b");
+
+sliderA.oninput = function() {
+  a = Number(this.value);
+}
+sliderB.oninput = function() {
+  b = Number(this.value);
+}
+
+function startIntervalUpdate(){
+	intUpdate = setInterval(function(){
+		clear()
+		draw()
+		off += 1
+	 }, speed);
+}
+function set(){
+
+}
+function clear(){
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, width, height);
+}
+function draw(){
+	var canvas = document.getElementById("myCanvas");
+	var degX = 0
+	var degY = off
+	var firstX = circlesX[0].x 	
+	var firstY = circlesY[0].y + Math.cos(degY/180*Math.PI)*largeRad
+	while(degX < 360*xInc){		
+		var x = circlesX[0].x + Math.sin(degX/180*Math.PI)*largeRad					
+		var y = circlesY[0].y + Math.cos(degY/180*Math.PI)*largeRad
+		
+		var px = prevX		
+		var py = prevY
+		if(degX+xInc < 360*xInc && degX != 0){
+			var ctx = canvas.getContext("2d");
+			ctx.beginPath();
+			style = "#FFFFFF"
+			ctx.strokeStyle = style;
+			ctx.moveTo(px,py)
+			ctx.lineTo(x,y)
+			ctx.stroke()
+		}
+		else if(degX != 0){
+			var ctx = canvas.getContext("2d");
+			ctx.beginPath();
+			style = "#FFFFFF"
+			ctx.strokeStyle = style;
+			ctx.moveTo(px,py)
+			ctx.lineTo(firstX,firstY)
+			ctx.stroke()
+		}
+		degX += xInc
+		degY += yInc
+		prevX = x
+		prevY = y
+	}
+	if(a){
+		xInc = a
+	}
+	if(b){
+	yInc = b
+	}
+}
+function createCanvas(){
+	document.getElementById("div").innerHTML = "<canvas	id='myBack' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	document.getElementById("div").innerHTML += "<canvas id='myCanvas' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	var canvas = document.getElementById("myBack");
+	var ctx = canvas.getContext("2d");
+	ctx.rect(0,0,width, height);
+    ctx.fillStyle = "#000000	";
+	ctx.fill()
+	createBoard(numberOfRows,numberOfColumns)
+	startIntervalUpdate()
+}
+function createBoard(rows,columns){
+	var larger
+	if(rows > columns){
+		larger = width/(rows+1)
+	}
+	else{
+		larger = height/(columns+1)
+	}	
+	largeRad = larger/2
+	for(var i = 1; i <= rows; i++){
+		circlesX.push(createCircle(width/2,height/2))
+	}
+	for(var i = 1; i <= columns; i++){
+		circlesY.push(createCircle(width/2,height/2))
+	}
+}
+function createCircle(x,y){
+	return (new circle(x,y))
+}
+function circle(x,y){
+	this.x = x;
+	this.y = y;
+}
+</script>
+</body>
+</html>

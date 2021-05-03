@@ -1,0 +1,100 @@
+<html>
+<head>
+<body onload="createCanvas()">
+	<title>rotate</title>
+	<style>		
+	canvas.absolute {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+	</style>
+<script>
+var width = 400;
+var height = 400;
+var line = [100,100,300,300]
+var viewx = 90
+var viewy = 0
+var fast = 5
+var pi = Math.PI
+var keylistener = document.addEventListener('keydown', function(event){
+	var e = event.keyCode
+	if(e == 38){
+		viewy += fast
+		console.log("up")
+		
+	}
+	else if(e == 40){
+		viewy -= fast
+		//down
+	}
+	else if(e == 37){
+		viewx -= fast
+		//left
+	}
+	else if(e == 39){
+		viewx += fast
+		console.log("r")
+		//right
+	}
+} );
+
+function cos(t){
+	return Math.cos(t)
+}
+function sin(t){
+	return Math.sin(t)
+}
+function startIntervalUpdate(){
+	intUpdate = setInterval(function(){
+		clear()
+		draw()
+	}, 50);
+}
+function createCanvas(){
+	document.getElementById("div").innerHTML = "<canvas	id='myBack' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	document.getElementById("div").innerHTML += "<canvas id='myCanvas' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	var canvas = document.getElementById("myBack");
+	var ctx = canvas.getContext("2d");
+	ctx.rect(0, 0, width, height);
+    ctx.fillStyle = "#000	";
+	ctx.fill()
+	startIntervalUpdate()
+}
+function draw(){
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	var tx = pi*viewx/180
+	var ty = pi*viewy/180
+	var xs = [line[0],line[2]]
+	var ys = [line[1],line[3]]
+	var center = [width/2,height/2]
+	var x1 = center[0] + (cos(tx)*(xs[0] - center[0]))
+	var x2 = center[0] + (cos(tx)*(xs[1] - center[0]))
+	var size1 = 5+(sin(tx)*cos(ty)*5)
+	var size2 = 5-(sin(tx)*cos(ty)*5)
+	var y1 = center[1] + (sin(ty)*(ys[0] - center[1]))
+	var y2 = center[1] + (sin(ty)*(ys[1] - center[1]))
+	//console.log("y1 " + y1)
+	//console.log("y2 " + y2)
+	ctx.beginPath()
+	ctx.arc(x1,y1,size1,0,2*pi)
+	ctx.moveTo(x1,y1)
+    ctx.lineTo(x2,y2)
+	ctx.arc(x2,y2,size2,0,2*pi)
+	ctx.strokeStyle = "#00FF00"
+	ctx.lineWidth = 2
+	ctx.stroke()
+	ctx.closePath()
+}
+function clear(){
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, width, height);
+}
+</script>
+	<div id="div">
+		
+	<div>	
+</body>
+</html>

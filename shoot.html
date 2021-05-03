@@ -1,0 +1,1031 @@
+<html>
+<head>
+<body onload="createCanvas()">
+	<title>Shoot</title>
+	<style>		
+	canvas.absolute {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+		cursor: none;
+	}
+	</style>
+	<link rel="stylesheet" type="text/css" href="musecss.css">
+<script>
+var height = 610;
+var width = 900;
+var projectiles = []
+var particles = []
+var numOfPar = 10;
+var gPar = 10;
+var frames = 1000/60
+var intUpdate; 
+var intShoot;
+var friction = .1
+var maxVel = 100;
+var event;
+var box;
+var randRate = 350
+var speed = 1
+var wallBounce = -.5
+var botBounce = -.4
+var wallB2 = 1
+var elasticity = 0.7
+var mouseDown = false;
+var fireRate = 10;
+var energyLoss = .01
+var slowDown = true
+var free = false
+var ballSize = [10,60]
+var randOmega = [-15,15]
+var display = true
+var toggle = true
+var yoff = 8;
+var down = false
+var visual = false
+var drawx 
+var drawy
+var lines = []
+var keylistener = document.addEventListener('keydown', function(event){
+	if(event.keyCode == 32){
+		//console.log("space")
+		projectiles.push(createProjectile(width/2,-30,0,-100,20,0))
+		if(toggle){
+			
+			//clearInterval(intRand)
+			toggle = false
+		}
+		else{
+			//randDisplay()
+			toggle = true
+		}
+	}
+	if(event.keyCode == 78){
+		//makeBox()
+	}
+} );
+if(free){
+	gPar = 0
+	friction = 0
+	wallBounce = -1
+	elasticity = 1
+}
+if(display){
+	//randDisplay()
+}
+document.body.onmousedown = function() { 
+    mouseDown = true;
+} 
+document.body.onmouseup = function() {
+    mouseDown = false;
+}
+function rand(max, min){
+	var ran = ((Math.random() * (max - min)) + min)
+	return ran;
+}
+function startIntervalUpdate(){
+	intUpdate = setInterval(function(){
+		clear()
+		updateCol()
+		updateBall()
+		draw()
+		if(!display){
+			getMouse()
+		}
+		drawCursor()
+	 }, frames);
+}
+function drawCursor(){
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	cor = getMouse()
+	ctx.beginPath()
+	ctx.arc(cor[0],cor[1],1,0,2*Math.PI)
+	ctx.fillStyle = "#00FFFF";
+	ctx.fill()
+	ctx.strokeStyle = "#000000"
+	ctx.lineWidth = 5
+	ctx.stroke()
+	ctx.closePath()
+}
+function randDisplay(){
+	intRand = setInterval(function(){
+		randBall()
+	 }, randRate);
+}
+function startIntervalShoot(){
+	intShoot = setInterval(function(){
+		if(mouseDown){
+			//getMouseClick()
+		}
+	 }, fireRate);
+}
+
+function randBall(){
+	var b = rand(ballSize[0],ballSize[1])
+	var o = rand(randOmega[0],randOmega[1])	
+	var x = rand(-100,100)
+	var y = rand(0,1)
+	
+	projectiles.push(createProjectile(width/2,-b,x,y,b,o))
+}
+function setEvent(e){
+	event = e
+}
+function getMouse(){
+	var offset = (window.innerWidth - width)/2
+	if(event){
+		var x = event.clientX - offset;    
+		var y = event.clientY - yoff;     
+		var cor = "X coords: " + x + ", Y coords: " + y;
+		return [x,y]
+	}
+	else{
+		return [-100,-100]
+	}
+}
+function getMouseClick(){
+	var offset = (window.innerWidth - width)/2
+	var x = event.clientX - offset;    
+	var y = event.clientY - yoff; 
+	if(!display){		    
+		var cor = "Click X coords: " + x + ", Y coords: " + y;
+		var b = rand(ballSize[0],ballSize[1])
+		var o = rand(randOmega[0],randOmega[1])		
+		projectiles.push(createProjectile(width/2,0,(x-(width/2))/2,-1*(y)/2,b,o))
+	}
+	if(down){
+		down = false
+		var x1
+		var x2
+		var y1
+		var y2
+		var nice = 10
+		
+		
+			if(Math.abs(drawx-x)<20){
+				x1 = drawx	
+				x2 = x1
+				y1 = drawy
+				y2 = y
+			}
+			else if(Math.abs(drawy-y)<20){
+				if(drawx < x){
+					y1 = drawy	
+					y2 = y1
+					x1 = drawx
+					x2 = x
+				}
+				else{
+					y1 = drawy	
+					y2 = y1
+					x1 = x
+					x2 = drawx
+				}
+			}
+			else{
+				var four5 = false
+				if(Math.abs(Math.abs(drawy-y) - Math.abs(drawx-x)) < 20){
+					four5 = true
+				}
+				if(drawx < x){
+					if(four5){
+						var difx = (x - drawx)
+						var dify = difx*((y - drawy)/Math.abs(y-drawy))
+						x1 = drawx
+						x2 = drawx + difx
+						y1 = drawy
+						y2 = drawy + dify
+
+					}
+					else{
+						x1 = drawx
+						x2 = x
+						y1 = drawy
+						y2 = y
+					}
+				}
+				else{
+					if(four5){
+						var difx = (drawx-x)
+						var dify = difx*((y - drawy)/Math.abs(y-drawy))
+						x1 = drawx - difx
+						x2 = drawx
+						y1 = drawy + dify
+						y2 = drawy
+
+					}
+					else{
+						x1 = x
+						x2 = drawx
+						y1 = y
+						y2 = drawy
+					}
+				}
+			}
+		
+		lines.push([x1,y1,x2,y2])
+	}
+	else{
+		down = true
+	}
+	drawx = x
+	drawy = y
+}
+function getDist(proj1,proj2){
+	var a = proj1.x - proj2.x;
+	var b = proj1.y - proj2.y;
+	var c = Math.sqrt( a*a + b*b );
+	return c
+}
+function getAng(proj1,proj2){
+	if(proj1.y < proj2.y){
+		var x1 = proj1.x
+		var x2 = proj2.x
+	}
+	else if(proj1.y > proj2.y){
+		var x2 = proj1.x
+		var x1 = proj2.x
+	}
+	else{
+		return 0
+	}
+	var y1 = height - proj1.y
+	var y2 = height - proj2.y
+	var a = x1 - x2
+	var b = Math.abs(y1 - y2);
+	var t = Math.atan(b/a)
+	if(t < 0){
+		t += Math.PI
+	}
+	return t
+}
+function toDeg(ang){
+	return ang*180/Math.PI
+}
+function collisionElsaticity(proj){
+	var vec = Math.sqrt(Math.pow(proj.velx,2)+Math.pow(proj.vely,2))
+	var vecAng = Math.atan(proj.vely/proj.velx)
+	return [Math.cos(vecAng)*vec*elasticity,Math.sin(vecAng)*vec*elasticity]
+}
+function toXY(vec,ang){
+	var x = (Math.cos(ang)*vec)
+	var y = (Math.sin(ang)*vec)
+	return [x,y]
+}
+function toVec(proj){
+	return Math.sqrt(Math.pow(proj.velx,2)+Math.pow(proj.vely,2))
+}
+function toVec2(vel,ang){
+	var x = vel*Math.cos(ang)
+	var y = vel*Math.sin(ang)
+	return [x,y]
+}
+function mom(p){
+	return p.mass * toVec(p)
+}
+function amom(p){
+	return inertia(p) * Math.abs(p.omega/180*Math.PI)
+}
+function getVelAng(proj){
+	var ang = Math.abs(Math.atan(proj.vely/proj.velx))
+	var x = proj.velx
+	var y = proj.vely
+	if(x < 0 && y > 0){
+		ang = Math.PI - ang
+	}
+	else if(x < 0 && y < 0){
+		ang = Math.PI + ang
+	}
+	else if(x > 0 && y < 0){
+		ang = (2*Math.PI) - ang
+	}
+	else if(x == 0 && y < 0){
+		ang = 3*Math.PI/2
+	}
+	else if(x == 0 && y > 0){
+		ang = Math.PI/2
+	}
+	else if(x > 0 && y == 0){
+		ang = 0
+	}
+	else if(x < 0 && y == 0){
+		ang = Math.PI
+	}
+	else if(x == 0 && y == 0){
+		ang = "still"
+	}
+	while(ang < 0){
+		ang += 2*Math.PI
+	}
+	return ang
+}
+function finalVel(p1,p2,phi){
+	var v1 = toVec(p1)
+	var v2 = toVec(p2)
+	var t1 = getVelAng(p1)
+	var t2 = getVelAng(p2)
+	var m1 = p1.mass
+	var m2 = p2.mass
+	var vel = (v1*Math.cos(t1-phi)*(m1-m2)+(2*m2*v2*Math.cos(t2-phi)))/(m1+m2)
+	var velx = vel*Math.cos(phi)+v1*Math.sin(t1-phi)*Math.sin(phi)
+	var vely = vel*Math.sin(phi)+v1*Math.sin(t1-phi)*Math.cos(phi)
+	return [velx,vely]
+}
+function collision(p1,p2){
+	if(getDist(p1,p2) < p1.size+p2.size){
+		return true
+	}
+	else{
+		return false
+	}
+}
+function borg(b1,b2){
+	// distance between the balls
+	dist = b1.size + b2.size 
+	// normal line
+	nx = ((b2.x - b1.x) / dist);
+	ny = (((height - b2.y) - (height - b1.y)) / dist);
+	
+	// tangent line
+	tx = -ny;
+	ty = nx;
+	
+	// dot product tan
+	dotProdTan1 = b1.velx * tx + b1.vely * ty;
+	dotProdTan2 = b2.velx * tx + b2.vely * ty;
+	
+	// dot product norm
+	dotProdNorm1 = b1.velx * nx + b1.vely * ny;
+	dotProdNorm2 = b2.velx * nx + b2.vely * ny;
+	
+	// conservation of momentum
+	m1 = (dotProdNorm1 * (b1.mass - b2.mass) + (2 * b2.mass * dotProdNorm2)) / (b1.mass + b2.mass)
+	m2 = (dotProdNorm2 * (b2.mass - b1.mass) + (2 * b1.mass * dotProdNorm1)) / (b1.mass + b2.mass)
+	
+	// final velocities
+	x1 = tx * dotProdTan1 + nx * m1;
+	y1 = ty * dotProdTan1 + ny * m1;
+	
+	x2 = tx * dotProdTan2 + nx * m2;
+	y2 = ty * dotProdTan2 + ny * m2;
+	
+	return [x1,y1,x2,y2]
+}
+function inertia(p){
+	return .5*p.mass*Math.pow(p.size,2)
+}
+function iToV(imp,p){
+	var vel = imp/p.mass
+	return vel
+}
+function spin(p,ang){
+	var vang = getVelAng(p)
+	var vel = toVec(p)
+	var velInDir = Math.sin(vang-ang)*vel
+	var omega = (((velInDir)-p.omega*p.size))/p.size
+	var fin = omega*(1-(1/Math.pow(vel,friction)))
+	return fin
+	
+}
+function getPointDist(p1,p2){
+	var dist = Math.sqrt(Math.pow(p1[0]-p2[0],2) + Math.pow(p1[1]-p2[1],2))
+	return dist
+}
+ function resLine(velocity, surface){
+	magnitude = Math.sqrt(Math.pow(surface[0], 2) + Math.pow(surface[1], 2));
+	normal = [-surface[1]/magnitude, surface[0]/magnitude];
+	dotProd = dot(velocity, normal);
+	multByNormal = [normal[0]*dotProd*2, normal[1]*dotProd*2]
+	result = [(velocity[0] - multByNormal[0]), (velocity[1] - multByNormal[1])];      
+	return result;     
+}
+function dot(p1,p2){
+	return p1[0] * p2[0] + p1[1] * p2[1]      
+}
+function tangent(p1,p2){
+	var dy = (p1[0]-p2[0])
+	var dx = (p1[1]-p2[1])*-1
+	var mag = Math.sqrt(Math.pow(dy,2) + Math.pow(dx,2))
+	mag /= 30
+	dx = dx/mag
+	dy = dy/mag
+	if(visual){
+		var canvas = document.getElementById("myCanvas");
+		var ctx = canvas.getContext("2d");
+		ctx.beginPath()
+		ctx.moveTo(p2[0]-dx,p2[1]-dy)
+		ctx.lineTo(p2[0]+dx,p2[1]+dy)
+		ctx.strokeStyle = "#0000FF"
+		ctx.lineWidth = 3
+		ctx.stroke()
+	}
+	return [dx,dy*-1]
+}
+function spin2(p,x,y){
+	var ang = Math.atan(Math.abs(y)/Math.abs(x))
+	if(x < 0 && y > 0){
+		ang = Math.PI - ang
+	}
+	if(x < 0 && y < 0){
+		ang += Math.PI
+	}
+	if(x > 0 && y < 0){
+		ang *= -1
+	}
+	var omega = spin(p,ang)
+	return omega
+}
+function spinVel(amom1,p,ang){
+	var amom2 = amom(p)
+	var imp = Math.floor((Math.abs(amom1 - amom2)))
+	var addVel = iToV(imp,p)
+	var vec = toVec2(addVel,ang)
+	return vec
+}
+function spinVel2 (p,x,y,dir,amom1){
+	var ang = Math.atan(Math.abs(y)/Math.abs(x))
+				
+	if(x < 0 && y > 0){
+		ang = Math.PI - ang
+	}
+	if(x < 0 && y < 0){
+		ang += Math.PI
+	}
+	if(x > 0 && y < 0){
+		ang *= -1
+	}
+	if(ang < 0){
+		ang += 2*Math.PI
+	}
+	if(dir == "plus"){
+		ang += Math.PI/2
+	}
+	else if(dir == "minus"){
+		ang -= Math.PI/2
+	}
+	var vec = spinVel(amom1,p,ang)	
+	return vec
+}
+function myCodeIsBad(x,y){
+	var ang = Math.atan(Math.abs(y)/Math.abs(x))
+	if(x < 0 && y > 0){
+		ang = Math.PI - ang
+	}
+	if(x < 0 && y < 0){
+		ang += Math.PI
+	}
+	if(x > 0 && y < 0){
+		ang *= -1
+	}
+	if(ang < 0){
+		ang += 2*Math.PI
+	}
+	return ang
+}
+function cross(p1,p2){
+	return p1[0] * p2[1] + p2[0] * p1[1]
+}
+function pequals(p1,p2){
+	if(!p1){
+		return false	
+	}
+	if(p1[0] == p2[0] && p1[1] == p2[1]){
+		var canvas = document.getElementById("myBack");
+		var ctx = canvas.getContext("2d");
+		ctx.beginPath();
+		ctx.moveTo(p1[0],p1[1]);
+		ctx.arc(p1[0],p1[1],6,0,2*Math.PI);
+		ctx.fillStyle = "#00FFFF"
+		ctx.fill()
+		return true
+	}
+	else{
+		return false
+	}
+}
+function drawBackLine(p1,p2,c){
+	var canvas = document.getElementById("myBack");
+	var ctx = canvas.getContext("2d");
+	ctx.beginPath();
+	ctx.moveTo(p2[0],p2[1]);
+	ctx.lineTo(p2[0]+p1[0],p2[1]-p1[1]);
+	ctx.strokeStyle = c
+	ctx.stroke()
+	ctx.closePath()
+}
+function isCol(){
+	for(var i = 0; i < projectiles.length; i++){
+		for(var j = 0; j < lines.length; j++){
+			var amom1 = amom(projectiles[i])
+			var p1 = [projectiles[i].x,projectiles[i].y]
+			
+			var hv = "none"
+			var p2 
+			var p3
+			var col = false
+			if(lines[j][0] == lines[j][2]){
+				p2 = [lines[j][0], p1[1]]
+				hv = "vert"
+			}
+			else if(lines[j][1] == lines[j][3]){
+				p2 = [p1[0],lines[j][3]]
+				hv = "hor"
+			}
+			if(hv == "none"){
+				var m = (lines[j][3]-lines[j][1])/(lines[j][2]-lines[j][0])
+				var r = -1/m
+				var x1 = lines[j][0]
+				var y1 = lines[j][1]
+				var x2 = projectiles[i].x
+				var y2 = projectiles[i].y
+				var x = (y2 - y1 + m*x1 - r*x2)/(m-r)
+				var y = m*(x-x1) + y1
+				p2 = [x,y]	
+			}
+			if(visual){
+				var canvas = document.getElementById("myCanvas");
+				var ctx = canvas.getContext("2d");
+				ctx.beginPath();
+				ctx.moveTo(p2[0],p2[1]);
+				ctx.arc(p2[0],p2[1],6,0,2*Math.PI);
+				ctx.fillStyle = "#FFFF00"
+				ctx.fill()
+			}
+			var ps = []
+			var p5 = [lines[j][2],lines[j][3]]
+			var which = []
+			if(getPointDist(p1,p5) < projectiles[i].size){
+				ps.push(p5)
+				which.push(4)
+			}
+			p5 = [lines[j][0],lines[j][1]]
+			if(getPointDist(p1,p5) < projectiles[i].size){
+				ps.push(p5)
+				which.push(5)
+			}
+			p5 = [lines[j][0], p1[1]]
+			if(hv == "vert" && getPointDist(p1,p5) < projectiles[i].size && ((p5[1] > lines[j][1] && p5[1] < lines[j][3]) || (p5[1] < lines[j][1] && p5[1] > lines[j][3]))){
+				ps.push(p5)
+				which.push(1)
+			}
+			p5 = [p1[0],lines[j][3]]
+			if(hv == "hor" && getPointDist(p1,p5) < projectiles[i].size && p5[0] > lines[j][0] && p5[0] < lines[j][2]){
+				ps.push(p5)
+				which.push(2)
+			}
+			if(p2[0] > lines[j][0] && p2[0] < lines[j][2] && getPointDist(p1,p2) < projectiles[i].size  && hv == "none"){
+				ps.push(p2)
+				which.push(3)
+			}
+			
+			if(ps.length > 0){
+				var minL = getPointDist(p1,ps[0])
+				var minI = 0
+				var whichWhich = which[0]
+			}
+			for(var k = 1; k < which.length; k++){
+				if(getPointDist(p1,ps[k]) < minL){
+					minL = getPointDist(p1,ps[k])
+					whichWhich = which[k]
+					
+				}
+			}
+			
+			if(which.length){
+				which = [whichWhich]
+			}
+			if(which.includes(1)){
+				p3 = p2
+				projectiles[i].velx *= wallBounce
+				if(projectiles[i].velx < 0){
+					var ang1 = Math.PI
+				}
+				else{
+					var ang1 = 0
+				}	
+				omega = spin(projectiles[i],ang1)
+				projectiles[i].omega += omega
+				var ang
+				if(projectiles[i].omega > 0){
+					ang = 0
+				}
+				else{
+					ang = Math.PI
+				}
+				var vec = spinVel(amom1,projectiles[i],ang)			
+				projectiles[i].velx += vec[0]
+				projectiles[i].vely += vec[1]
+				col = true
+			}
+			else if(which.includes(2)){
+				p3 = p2
+				projectiles[i].vely *= wallBounce
+				if(projectiles[i].vely > 0){
+					var ang1 = 3*Math.PI/2
+				}
+				else{
+					var ang1 = Math.PI/2
+				}
+				omega = spin(projectiles[i],ang1)
+				projectiles[i].omega += omega
+				var ang
+				if(projectiles[i].omega > 0){
+					ang = 0
+				}
+				else{
+					ang = Math.PI
+				}
+				var vec = spinVel(amom1,projectiles[i],ang)
+				projectiles[i].velx += vec[0]
+				projectiles[i].vely += vec[1]
+				col = true
+			}
+			else if(which.includes(3)){
+				var negVel = false
+				if(projectiles[i].vely < 0){
+					negVel = true
+				}
+				p3 = p2
+				var dir
+				if(projectiles[i].omega > 0){
+					dir = "plus"
+				}
+				else if(projectiles[i].omega < 0){
+					dir = "minus"
+				}
+				var res = resLine([projectiles[i].velx,projectiles[i].vely],[lines[j][2]-lines[j][0],lines[j][1]-lines[j][3]])
+				projectiles[i].velx = res[0] * wallB2
+				projectiles[i].vely = res[1] * wallB2
+				
+				if(negVel){
+					var line = [(lines[j][2]-lines[j][0]),(lines[j][1]-lines[j][3])]
+					var mag = Math.sqrt(Math.pow(line[0],2) + Math.pow(line[1],2))
+					line = [line[0]/mag,line[1]/mag]
+					rline = [line[1],line[0]]
+					r2line = [Math.abs(line[1]),Math.abs(line[0])]
+					var tgs = dot([Math.abs(projectiles[i].velx),Math.abs(projectiles[i].vely)],r2line)
+					var newVel = [-rline[0]*tgs,rline[1]*tgs]
+					
+					var vel = [projectiles[i].velx,projectiles[i].vely]
+					var mult = .3
+					projectiles[i].velx -= newVel[0] * mult
+					projectiles[i].vely -= newVel[1] * mult
+				} 
+				 
+				var y = p1[1]-p2[1]
+				var x = p2[0]-p1[0]
+				omega = spin2(projectiles[i],x,y)			
+				projectiles[i].omega += omega
+				
+				var vec = spinVel2(projectiles[i],x,y,dir,amom1)
+				
+				projectiles[i].velx += vec[0]
+				projectiles[i].vely += vec[1]
+				col = true
+			}
+			var p2 = [lines[j][0],lines[j][1]]		
+			
+			var tan = tangent(p1,p2)
+			var dx = tan[0]
+			var dy = tan[1]
+			
+			if(which.includes(5)){
+				p3 = p2
+				var res = resLine([projectiles[i].velx,projectiles[i].vely],[dx,dy])
+				projectiles[i].velx = res[0] * wallB2
+				projectiles[i].vely = res[1] * wallB2
+				var y = p1[1]-p2[1]
+				var x = p2[0]-p1[0]
+				omega = spin2(projectiles[i],x,y)	
+				projectiles[i].omega = omega
+				col = true
+			}
+			
+			p2 = [lines[j][2],lines[j][3]]
+			
+			tan = tangent(p1,p2)
+			dx = tan[0]
+			dy = tan[1]
+				
+			if(which.includes(4)){
+				p3 = p2
+				var res = resLine([projectiles[i].velx,projectiles[i].vely],[dx,dy])
+				projectiles[i].velx = res[0] * wallB2
+				projectiles[i].vely = res[1] * wallB2
+				var y = p1[1]-p2[1]
+				var x = p2[0]-p1[0]
+				omega = spin2(projectiles[i],x,y)	
+				projectiles[i].omega = omega
+				col = true				
+			}
+			if(col){
+				projectiles[i].col = true
+				var nub = .96
+				projectiles[i].velx *= nub
+				projectiles[i].vely *= nub
+				projectiles[i].omega *= .9
+				var y = p1[1]-p3[1]
+				var x = p3[0]-p1[0]
+				if(x != 0 && y != 0){
+					var r = Math.abs(x/y)
+					var h = projectiles[i].size
+					var b = Math.sqrt(Math.pow(h,2)/(Math.pow(r,2)+1))*(y/Math.abs(y))
+					var a = r*Math.abs(b) * (x/Math.abs(x))
+					projectiles[i].x = p3[0] - a
+					projectiles[i].y = p3[1] + b
+					
+				}
+				else if(x == 0){
+					projectiles[i].x = p3[0]
+					projectiles[i].y = p3[1] + projectiles[i].size * (y/Math.abs(y))
+				}
+				else{
+					projectiles[i].x = p3[0] - projectiles[i].size * (x/Math.abs(x))
+					projectiles[i].y = p3[1] 
+				}
+			}
+		}
+	}
+}
+function updateBall(){
+	for (var i = 0; i < projectiles.length; i++) {
+		projectiles[i].vely -= gPar * (frames/100)
+		projectiles[i].y -= projectiles[i].vely * (frames/100) * speed
+		projectiles[i].x += projectiles[i].velx * (frames/100) * speed
+		var px = projectiles[i].x
+		var py = projectiles[i].y
+		projectiles[i].px = px
+		projectiles[i].py = py
+		projectiles[i].angle += projectiles[i].omega * (frames/100) * speed * 35
+		if(projectiles[i].angle >= 360){
+			projectiles[i].angle -= 360
+		}		
+		if(slowDown){
+			projectiles[i].velx *= (1 - (1/Math.pow(projectiles[i].mass,2)))
+			projectiles[i].vely *= (1 - (1/Math.pow(projectiles[i].mass,2)))
+		}	
+		
+	}
+}
+function updateCol(){
+	isCol()
+	for(var i = 0; i < projectiles.length; i++){
+		var projectileSize = projectiles[i].size
+		var omega = 0
+		var wall = false
+		var ang
+		var bp = projectiles[i].omega
+		var amom1 = amom(projectiles[i])
+		//right wall
+		if(projectiles[i].x > width-projectileSize){
+			omega = spin(projectiles[i],0)
+			projectiles[i].velx *= wallBounce
+			projectiles[i].x = width-projectileSize
+			if(projectiles[i].omega > 0){
+				ang = Math.PI/2
+			}
+			else{
+				ang = 3*Math.PI/2
+			}
+			wall = true			
+		}
+		//left
+		else if(projectiles[i].x < projectileSize){
+			//console.log("left")
+			omega = spin(projectiles[i],Math.PI)
+			projectiles[i].velx *= wallBounce
+			projectiles[i].x = projectileSize
+			if(projectiles[i].omega < 0){
+				ang = Math.PI/2
+			}
+			else{
+				ang = 3*Math.PI/2
+			}
+			wall = true
+		}
+		//bot
+		else if(projectiles[i].y > height-projectileSize){
+			omega = spin(projectiles[i],3*Math.PI/2)
+			projectiles[i].vely *= botBounce + (projectiles[i].vely*.003)
+			projectiles[i].velx *= .96
+			projectiles[i].y = height-projectileSize
+			if(projectiles[i].omega > 0){
+				ang = 0
+			}
+			else{
+				ang = Math.PI
+			}
+			wall = true
+		}
+		if(wall == true){
+			projectiles[i].col = true
+			projectiles[i].omega += omega	
+			var amom2 = amom(projectiles[i])
+			var imp = Math.floor((Math.abs(amom1 - amom2)))
+			var addVel = iToV(imp,projectiles[i])
+			var vec = toVec2(addVel,ang)
+			projectiles[i].vely += vec[1]
+			projectiles[i].velx += vec[0]
+		}		
+		for(var j = i; j < projectiles.length; j++){
+			if(j != i){
+				if(collision(projectiles[i], projectiles[j]) && (toVec(projectiles[i]) > 1 || (toVec(projectiles[j])) > 1)){
+					projectiles[i].col = true
+					projectiles[i].col = true
+					if(projectiles[i].y > projectiles[j].y){
+						var b1 = projectiles[i]
+						var b2 = projectiles[j]
+					}
+					else {
+						var b2 = projectiles[i]
+						var b1 = projectiles[j]
+					}
+					var amom31 = amom(b1)
+					var amom41 = amom(b2)
+					var colAng = getAng(b1,b2)
+					
+					b1.omega += spin(b1,colAng)
+					b2.omega += spin(b2,colAng + Math.PI)
+					var nd = borg(b1,b2)
+					var nummm = .9
+					b1.velx = nd[0]*nummm
+					b1.vely = nd[1]*nummm
+					b2.velx = nd[2]*nummm
+					b2.vely = nd[3]*nummm
+					
+						b2.x = (b1.x+(Math.cos(colAng)*(projectiles[i].size + projectiles[j].size)))
+						b2.y = (b1.y-(Math.sin(colAng)*(projectiles[i].size + projectiles[j].size)))
+					
+					if(projectiles[i].y > projectiles[j].y){
+						projectiles[i].velx = b1.velx
+						projectiles[i].vely = b1.vely
+						projectiles[j].velx = b2.velx
+						projectiles[j].vely = b2.vely
+					}
+					else {
+						projectiles[j].velx = b1.velx
+						projectiles[j].vely = b1.vely
+						projectiles[i].velx = b2.velx
+						projectiles[i].vely = b2.vely
+					}
+				}
+			}
+		}		
+	}
+}
+function clear(){
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, width, height);
+	ctx.closePath()
+}
+function draw(){
+	var canvas = document.getElementById("myCanvas");
+	for(var i = 0; i < projectiles.length; i++){
+		var ctx = canvas.getContext("2d");
+		ctx.beginPath();
+		var x = projectiles[i].x
+		var y = projectiles[i].y
+		var color = projectiles[i].color
+		var size = projectiles[i].size
+		ctx.moveTo(x,y);
+		ctx.arc(x,y,size,0,2*Math.PI);	
+		var style = color
+		ctx.fillStyle = style;
+		ctx.strokeStyle = "#000000";
+		ctx.fill()
+		ctx.beginPath()
+		var ang = projectiles[i].angle/180*Math.PI
+		dx = projectiles[i].size*Math.cos(ang)
+		dy = projectiles[i].size*Math.sin(ang)
+		ctx.moveTo(x-dx,y-dy)
+		ctx.lineTo(x+dx,y+dy)
+		ctx.lineWidth = 5
+		ctx.stroke()
+		ctx.closePath()
+	}	
+	if(down){
+		ctx = canvas.getContext("2d");
+		ctx.beginPath();
+		ctx.moveTo(drawx,drawy)	
+		ctx.lineTo(cor[0],cor[1])
+		ctx.strokeStyle = "#FF0000";
+		ctx.lineWidth = 2
+		ctx.stroke()
+		ctx.closePath()
+	}
+	for(var i = 0; i < lines.length; i++){
+		ctx = canvas.getContext("2d");
+		ctx.beginPath();
+		ctx.moveTo(lines[i][0],lines[i][1])
+		ctx.lineTo(lines[i][2],lines[i][3])
+		ctx.strokeStyle = "#FF0000";
+		ctx.lineWidth = 2
+		ctx.stroke()
+		ctx.closePath()
+	}
+}
+function makeBox(){
+	var x = rand(width - 50, 50);
+	var y = rand(height - 50, height/2+50);
+	var ang = rand(2*Math.PI, Math.PI)
+	box = [x,y,ang]
+	console.log(box)
+	var tx = x
+	var ty = y
+	x += Math.cos(ang)*50
+	y -= Math.sin(ang)*50	
+	if(tx < x) lines.push([tx,ty,x,y])
+	else lines.push([x,y,tx,ty])
+	
+	tx = x
+	ty = y;
+	ang += Math.PI/2
+	x += Math.cos(ang)*50
+	y -= Math.sin(ang)*50
+	if(tx < x) lines.push([tx,ty,x,y])
+	else lines.push([x,y,tx,ty])
+	
+	tx = x
+	ty = y
+	ang += Math.PI/2
+	x += Math.cos(ang)*50
+	y -= Math.sin(ang)*50
+	if(tx < x) lines.push([tx,ty,x,y])
+	else lines.push([x,y,tx,ty])
+	
+	
+}
+function drawLine(x,y){	
+	
+	x = x-(width/2)
+	var length = Math.sqrt(Math.pow(x,2) + Math.pow(y,2))/3
+	
+	var angle = Math.atan(y/x)
+	x = Math.cos(angle) * length
+	y = Math.sin(angle) * length
+	if(y<0){
+		y = y*-1
+		x = x*-1
+	}
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	ctx.beginPath();
+	ctx.moveTo(width/2,0)
+	ctx.lineTo(x+(width/2),(y))
+	ctx.strokeStyle = "#FFFFFF"
+	ctx.lineWidth = 2
+	ctx.stroke()
+}
+
+function createCanvas(){
+	document.getElementById("div").innerHTML += "<canvas	id='myBack' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	document.getElementById("div").innerHTML += "<canvas onmousemove='setEvent(event)' onclick='getMouseClick()' id='myCanvas' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	var canvas = document.getElementById("myBack");
+	var ctx = canvas.getContext("2d");
+	ctx.beginPath()
+	ctx.rect(0, 0, width, height);
+    ctx.fillStyle = "#000000	";
+	ctx.fill()
+	ctx.closePath()
+	ctx.beginPath()
+	ctx.strokeStyle = "#FFF"
+	ctx.moveTo(width/2,0)
+	ctx.lineTo(width/2,height)
+	ctx.stroke()
+	ctx.closePath()
+	ctx.beginPath()
+	ctx.moveTo(0,height/2)
+	ctx.lineTo(width,height/2)
+	ctx.stroke()
+	ctx.closePath()
+	//makeBox();
+	startIntervalUpdate()
+	startIntervalShoot()
+}
+function createProjectile(x,y,velx,vely,size,omega){
+	return (new projectile(x,y,width/2,0,velx,vely,size,"#FFFFFF",0,omega))
+}
+
+function projectile(x,y,px,py,velx,vely,size,color,angle,omega){
+	this.x = x;
+	this.y = y;
+	this.px = px;
+	this.py = py;
+	this.velx = velx;
+	this.vely = vely;
+	this.size = size
+	this.color = color
+	this.angle = angle
+	this.mass = (Math.PI * Math.pow(size,2))
+	this.omega = omega
+	this.col = false
+}
+</script>
+	<div id="div">
+		<h3>Click to draw lines</h3>
+		<h3>Press space to drop balls</h3>
+	<div>	
+</body>
+</html>

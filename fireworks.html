@@ -1,0 +1,229 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="musecss.css">
+<body onload="createCanvas()">
+	<title>Fireworks</title>
+	<style>		
+	canvas.absolute {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+	</style>
+<script>
+var height = 550;
+var width = 1200;
+var fws = []
+var intUpdate; 
+var frames = 10;
+var numberOfWorks = 5;
+var numOfParticles = 30;
+var totPart = numOfParticles*(numberOfWorks*3)
+var parInd = 0;
+var gravity = 2.5;
+var gPar = 1.5;
+var vMax = Math.sqrt(2*(gravity)*(height * .9))
+var particles = []
+var fade =  .2;
+var trail = .15;
+var red = "255,80,0"
+var green = "0,255,0"
+var blue = "0,184,255"
+var cyan = "0,255,245"
+var yellow = "255,255,0"
+var purple = "255,0,204"
+var pink = "255,100,201"
+var white = "255,255,180"
+var colors = []
+
+function setColors(){
+	colors = [red,green,blue,cyan,yellow,purple,white]
+}
+function rand(max, min){
+	var ran = ((Math.random() * (max - min)) + min)
+	return ran;
+}
+function getSizeFireWork(){
+	var size = rand (1, 5.5)
+	return size
+}
+function getSizePar(fwSize){
+	var size = fwSize/2
+	return size
+}
+function getx(){
+	var x = rand(0,width)
+	return x;
+}
+function getColor(){
+	var ran = Math.floor(rand(0,colors.length))	
+	var color = colors[ran]
+	return color
+}
+function getXVelPar(vely,y,workVel){
+	vely = (vely - (12*height/y)/2)/((12*height/y)/2)
+	var vel = rand(1, 7)*(height/y)	
+	var neg = Math.floor(rand(0,2))
+	if(neg%2 == 1){
+		vel*=-1
+	}
+	var velx = Math.sqrt(1-Math.pow(vely,2))*vel+(workVel/3)
+	return velx
+}
+function getYVelPar(y){
+	var vel = rand(0, 12)*(height/y)
+	return vel 
+}
+function getYVelWork(){
+	var vel = rand(10, vMax)
+	return vel
+}
+function getXVelWork(){
+	var vel = rand(-10, 10)
+	return vel
+}
+function setWorks(){
+	for(var i = 0; i < numberOfWorks; i++){
+		fws.push(createFirework())
+	}
+}
+function setParticles(){
+	for(var i = 0; i < totPart; i++){
+		particles.push(createParticle(0, height*2, 1,"0,0,0"))
+	}
+}
+function startIntervalUpdate(){
+	intUpdate = setInterval(function(){
+		clear()
+		update()
+		draw()
+	 }, frames);
+}
+function explode(x,y,color,size,workVel){
+	for(var i = 0; i < numOfParticles; i++){
+		particles[parInd] = (createParticle(x,y,(height/y),color,size,workVel))
+		parInd += 1
+		if(parInd == (totPart)){
+			parInd = 0
+		}
+	}
+}
+function update(){
+	for(var i = 0; i < fws.length; i++){
+		fws[i].vely -= gravity * (frames/100)
+		fws[i].y -= fws[i].vely * (frames/100)
+		fws[i].x += fws[i].velx * (frames/100)
+		if(fws[i].vely < -2){
+			explode(fws[i].x, fws[i].y, fws[i].color, fws[i].size,fws[i].velx)
+			fws[i] = createFirework()		
+		}
+	}
+	for(var i = 0; i < totPart; i++){
+		particles[i].vely -= gPar * (frames/100)
+		particles[i].y -= particles[i].vely * (frames/100)
+		particles[i].x += particles[i].velx * (frames/100)
+		particles[i].trans -= (fade * (frames/100))
+	}
+	
+}
+function clear() {
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, width, height);
+}
+function draw(){
+	var canvas = document.getElementById("myCanvas");
+	var back = document.getElementById("myBack");
+	for(var i = 0; i < fws.length; i++){
+		var ctx = canvas.getContext("2d");
+		var ctxback = back.getContext("2d")
+		ctx.beginPath();
+		var x = fws[i].x
+		var y = fws[i].y
+		var color = fws[i].color
+		var size = fws[i].size
+		ctx.moveTo(x,y);
+		ctx.arc(x,y,size,0,2*Math.PI);
+		var style = "rgb(" + color + ")"
+		ctx.fillStyle = style;
+		ctx.fill()
+		
+		ctxback.beginPath()
+		ctxback.arc(x,y,size,0,2*Math.PI);
+		var style = "rgb(" + color + ")"
+		ctxback.fillStyle = style;
+		ctxback.fill()
+		
+	}
+	for(var i = 0; i < totPart; i++){
+		var ctx = canvas.getContext("2d");
+		var ctxback = back.getContext("2d")
+		ctx.beginPath();
+		var x = particles[i].x
+		var y = particles[i].y
+		var trans = particles[i].trans
+		var color = particles[i].color
+		var size = particles[i].size
+		ctx.arc(x,y,size,0,2*Math.PI);
+		var style = "rgba(" + color + "," + trans + ")";
+		ctx.fillStyle = style
+		ctx.fill()
+		
+		ctxback.beginPath()
+		ctxback.arc(x,y,size,0,2*Math.PI);
+		var style = "rgba(" + color + "," + trans + ")";
+		ctxback.fillStyle = style
+		ctxback.fill()
+	}
+	
+	var ctxback = back.getContext("2d")
+	ctxback.beginPath()
+	ctxback.rect(0, 0, width, height);
+    ctxback.fillStyle = "rgba(0,0,0," + trail + ")";
+	ctxback.fill()
+	
+}
+function createCanvas(){
+	document.getElementById("div").innerHTML = "<canvas	id='myBack' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	document.getElementById("div").innerHTML += "<canvas id='myCanvas' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	var canvas = document.getElementById("myBack");
+	var ctx = canvas.getContext("2d");
+	ctx.rect(0, 0, width, height);
+    ctx.fillStyle = "#000000";
+	ctx.fill()
+	setWorks()
+	setColors()
+	setParticles()
+	startIntervalUpdate()
+}
+function createFirework(){
+	return (new fireWork(getx(), height, getXVelWork(), getYVelWork(), getColor(), getSizeFireWork()))
+}
+function createParticle(x,y,trans,color,size,workVel){
+	var vely =  getYVelPar(y)
+	return (new particle(x, y, getXVelPar(vely,y,workVel), vely, trans, color, getSizePar(size)))
+}
+
+function fireWork(x, y, velx, vely, color, size){
+	this.x = x;
+	this.y = y;
+	this.velx = velx;
+	this.vely = vely;
+	this.color = color
+	this.size = size
+}
+function particle(x,y,velx,vely,trans,color,size){
+	this.x = x;
+	this.y = y;
+	this.velx = velx;
+	this.vely = vely;
+	this.trans = trans;
+	this.color = color
+	this.size = size	
+}
+</script>
+	<div id="div">
+		
+	<div>	
+</body>
+</html>

@@ -1,0 +1,146 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="musecss.css">
+<body onload="createCanvas()">
+	<title>Ripples</title>
+	<style>		
+	canvas.absolute {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+	</style>
+<script>
+var height = 600;
+var width = 800;
+var origins = []
+var ripples = []
+var frames = 30
+var speed = 4;
+var fade = .035;
+var orgFade = .03;
+var rippleOffSet = 10;
+var rippleSize = .1
+var countSize = 1.5
+var intUpdate; 
+var event;
+var mouseDown = false;
+document.body.onmousedown = function() { 
+    mouseDown = true;
+}
+document.body.onmouseup = function() {
+    mouseDown = false;
+}
+function startIntervalUpdate(){
+	intUpdate = setInterval(function(){
+		clear()
+		update()
+		draw()
+	 }, frames);
+}
+function setEvent(e){
+	event = e
+}
+function getMouseClick(){
+	var offset = (window.innerWidth - width)/2
+	var x = event.clientX - offset;    
+	var y = event.clientY;     
+	var cor = "Click X coords: " + x + ", Y coords: " + y;
+	origins.push(createOrigin(x,y,1,0))
+}
+function update(){
+	for(var i = 0; i < origins.length; i++){
+		origins[i].trans -= orgFade * (frames/100)
+		origins[i].time += (frames/100)
+		if(Math.floor(origins[i].time)%rippleOffSet == 0){
+			ripples.push(createRipple(origins[i].x,origins[i].y,0,origins[i].trans))
+		}
+		if(origins[i].trans <= 0){
+			origins.splice(i,1)
+		}
+	}
+	for(var i = 0; i < ripples.length; i++){
+		ripples[i].rad += speed * (frames/100)
+		ripples[i].trans -= fade * (frames/100)
+	}
+	for(var i = 0; i < ripples.length; i++){
+		if(ripples[i].trans <= 0){
+			ripples.splice(i,1)
+		}
+	}
+}
+function clear(){
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, width, height);
+}
+function createCanvas(){
+	document.getElementById("div").innerHTML = "<canvas	id='myBack' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	document.getElementById("div").innerHTML += "<canvas onmousemove='setEvent(event)' onclick='getMouseClick()' id='myCanvas' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	var canvas = document.getElementById("myBack");
+	var ctx = canvas.getContext("2d");
+	ctx.rect(0, 0, width, height);
+    ctx.fillStyle = "#000000";
+	ctx.fill()
+	startIntervalUpdate()
+}
+function draw(){
+	var canvas = document.getElementById("myCanvas");
+	for(var i = 0; i < ripples.length; i++){
+		var ctx = canvas.getContext("2d");
+		var style = "rgba(0,255,255," + ripples[i].trans + ")"
+		ctx.strokeStyle = style;
+		ctx.beginPath();
+		var x = ripples[i].x
+		var y = ripples[i].y
+		var rad = ripples[i].rad
+		ctx.arc(x,y,rad,0,2*Math.PI);		
+		ctx.stroke()
+		var trans = ripples[i].trans
+		var count = 0
+		while(trans > 0){	
+			style = "rgba(0,255,255," + trans + ")"
+			ctx.strokeStyle = style;
+			ctx.beginPath()
+			ctx.arc(x,y,rad+count,0,2*Math.PI);
+			ctx.stroke()
+			trans -= rippleSize;
+			count += countSize
+		}
+		var trans = ripples[i].trans
+		var count = 0
+		while(trans > 0 && rad > count){	
+			style = "rgba(0,255,255," + trans + ")"
+			ctx.strokeStyle = style;
+			ctx.beginPath()
+			ctx.arc(x,y,rad-count,0,2*Math.PI);
+			ctx.stroke()
+			trans -= rippleSize;
+			count += countSize
+		}
+	}	
+}
+function createOrigin(x,y,trans,time){
+	return (new origin(x,y,trans,time))
+}
+function origin(x,y,trans,time){
+	this.x = x;
+	this.y = y;
+	this.trans = trans;	
+	this.time = time
+}
+function createRipple(x,y,rad,trans){
+	return (new ripple(x,y,rad,trans))
+}
+function ripple(x,y,rad,trans){
+	this.x = x;
+	this.y = y;
+	this.trans = trans;	
+	this.rad = rad
+}
+</script>
+	<div id="div">
+		
+	<div>	
+</body>
+</html>

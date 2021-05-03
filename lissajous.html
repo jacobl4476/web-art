@@ -1,0 +1,225 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="musecss.css">
+<body onload="createCanvas()">
+	<title>Lissa  Jous</title>
+	<style>		
+	canvas.absolute {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+	</style>
+<script>
+var height = 700;
+var width = 700;
+var speed = 10;
+var smallRad = 5;
+var largeRad = 100;
+var numberOfRows = 6
+var numberOfColumns = 6	
+var intUpdate; 
+var circlesX = []
+var circlesY = []
+var prevX = []
+var prevY = []
+
+function startIntervalUpdate(){
+	intUpdate = setInterval(function(){
+		clear()
+		update()
+		draw()
+	 }, speed);
+}
+function update(){
+	var one = true;
+	var before = circlesX[0].deg;
+	for(var i = 1; i < circlesX.length; i++){
+		if(circlesX[i].deg != before){
+			one = false;
+		}
+	}			
+	var two = true
+	before = circlesY[0].deg;
+	if(one){
+		for(var i = 1; i < circlesY.length; i++){
+			if(circlesY[i].deg != before){
+				two = false;
+			}
+		}		
+	}
+	if(two && one){
+		reset();
+	}
+
+	for(var i = 0; i < circlesX.length; i++){
+		circlesX[i].deg += 1*circlesX[i].speed		
+		if(circlesX[i].deg >= 360){
+			circlesX[i].deg -= 360
+		}		
+	}
+	for(var i = 0; i < circlesY.length; i++){
+		circlesY[i].deg += 1*circlesY[i].speed
+		if(circlesY[i].deg >= 360){
+			circlesY[i].deg -= 360
+		}
+	}
+}
+
+function clear(){
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, width, height);
+}
+function draw(){
+	var arrX = []
+	var arrY = []
+	var canvas = document.getElementById("myCanvas");
+	for(var i = 0; i < circlesX.length; i++){
+		var deg = circlesX[i].deg/180*Math.PI
+		var x = circlesX[i].x + Math.sin(deg)*largeRad
+		var y = circlesX[i].y + Math.cos(deg)*largeRad
+		var ctx = canvas.getContext("2d");
+		ctx.beginPath();
+		style = "#FFFFFF"
+		ctx.strokeStyle = style;
+		ctx.beginPath()
+		ctx.arc(x,y,smallRad,0,2*Math.PI);
+		ctx.stroke()
+		drawVert(x);
+		arrX.push(x)
+	}
+	for(var i = 0; i < circlesY.length; i++){
+		var deg = circlesY[i].deg/180*Math.PI
+		var x = circlesY[i].x + Math.sin(deg)*largeRad
+		var y = circlesY[i].y + Math.cos(deg)*largeRad
+		var ctx = canvas.getContext("2d");
+		ctx.beginPath();
+		style = "#FFFFFF"
+		ctx.strokeStyle = style;
+		ctx.beginPath()
+		ctx.arc(x,y,smallRad,0,2*Math.PI);
+		ctx.stroke()
+		drawHor(y)
+		arrY.push(y)
+	}
+	for(var i = 0; i < arrX.length; i++){
+		var x = arrX[i]
+		for(var j = 0; j < arrY.length; j++){
+			var ctx = canvas.getContext("2d");
+			var y = arrY[j]
+			ctx.beginPath();			
+			style = "#FFFFFF"
+			ctx.strokeStyle = style;
+			ctx.arc(x,y,smallRad,0,2*Math.PI);
+			ctx.stroke()
+		}
+	}
+	canvas = document.getElementById("myBack");
+	for(var i = 0; i < arrX.length; i++){
+		var x = arrX[i]
+		var px = prevX[i]
+		for(var j = 0; j < arrY.length; j++){
+			var ctx = canvas.getContext("2d");
+			var y = arrY[j]
+			var py = prevY[j]
+			ctx.beginPath();
+			style = "#FFFFFF"
+			ctx.strokeStyle = style;
+			ctx.moveTo(px,py)
+			ctx.lineTo(x,y)
+			ctx.stroke()
+		}
+	}
+	prevX = arrX
+	prevY = arrY
+}
+function drawHor(y){
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	ctx.beginPath()
+	ctx.moveTo(0,y)
+	ctx.lineTo(width,y)
+	style = "#FFFFFF"
+	ctx.strokeStyle = style;
+	ctx.stroke()
+}
+function drawVert(x){
+	var canvas = document.getElementById("myCanvas");
+	var ctx = canvas.getContext("2d");
+	ctx.beginPath()
+	ctx.moveTo(x,0)
+	ctx.lineTo(x,height)
+	style = "#FFFFFF"
+	ctx.strokeStyle = style;
+	ctx.stroke()
+}
+function drawCircle(x,y){
+	var canvas = document.getElementById("myBack");
+	var ctx = canvas.getContext("2d");
+	ctx.beginPath();
+	style = "#FFFFFF"
+	ctx.strokeStyle = style;
+	ctx.beginPath()
+	ctx.arc(x,y,largeRad,0,2*Math.PI);
+	ctx.stroke()
+}
+function reset(){
+	var canvas = document.getElementById("myBack");
+	var ctx = canvas.getContext("2d");
+	ctx.rect(0,0,width,height);
+    ctx.fillStyle = "#000000";
+	ctx.fill()
+	for(var i = 0; i < circlesX.length; i++){
+		drawCircle(circlesX[i].x,circlesX[i].y)
+	}
+	for(var i = 0; i < circlesY.length; i++){
+		drawCircle(circlesY[i].x,circlesY[i].y)
+	}
+	
+}
+function createCanvas(){
+	document.getElementById("div").innerHTML = "<canvas	id='myBack' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	document.getElementById("div").innerHTML += "<canvas id='myCanvas' class='absolute' style='border:1px solid #c3c3c3' width='" + width + "' height='" + height + "'>He</canvas>"
+	var canvas = document.getElementById("myBack");
+	var ctx = canvas.getContext("2d");
+	ctx.rect(0,0,width, height);
+    ctx.fillStyle = "#000000	";
+	ctx.fill()
+	createBoard(numberOfRows,numberOfColumns)
+	startIntervalUpdate()
+}
+function createBoard(rows,columns){
+	var larger
+	if(rows > columns){
+		larger = width/(rows+1)
+	}
+	else{
+		larger = height/(columns+1)
+	}	
+	largeRad = larger/2
+	for(var i = 1; i <= rows; i++){
+		circlesX.push(createCircle((i*(largeRad*2)+(largeRad)),largeRad,i))
+	}
+	for(var i = 1; i <= columns; i++){
+		circlesY.push(createCircle(largeRad,(i*(largeRad*2)+(largeRad)),i))
+	}
+}
+function createCircle(x,y,speed){
+	drawCircle(x,y)
+	
+	return (new circle(x,y,0,speed))
+}
+function circle(x,y,deg,speed){
+	this.x = x;
+	this.y = y;
+	this.deg = deg;
+	this.speed = speed;
+}
+//271972572
+</script>
+	<div id="div">
+		
+	<div>	
+</body>
+</html>
